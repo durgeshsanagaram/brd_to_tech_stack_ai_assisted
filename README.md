@@ -208,6 +208,22 @@ After that, `git commit` runs both automatically. To skip them for one commit:
 pipeline runs after; empty/malformed BRD → commit blocked before it's created) in an isolated
 test repo, not just read through.
 
+### Fourth option: GitHub Actions CI
+
+`.github/workflows/ci.yml` runs the same checks as "Running It" above — Layer 1 parsing of every
+BRD in the KB, the guardrails suite, the Critic's rev0→rev1 scoring demo, and the full
+`run_all.py` pipeline — on every push/PR to `main`. No `OPENAI_API_KEY` secret is required to pass:
+without one, it falls back to local embeddings same as any contributor without a key, which lands
+the Plan Generator at Amber instead of Green (documented calibration limit, not a CI failure,
+`run_all.py` doesn't gate its exit code on Critic badges). Add `OPENAI_API_KEY` as a repository
+secret (Settings → Secrets and variables → Actions) to exercise the documented
+`text-embedding-3-small` path instead.
+
+Verified both states directly, not just by reading the workflow file: run #1 (no secret) —
+job succeeded in 52s, Plan Generator landed Amber (3.75) as expected; after adding the
+`OPENAI_API_KEY` repo secret, re-run #2 — job succeeded in 42s, all 5 agents landed Green (4.62),
+matching the local demo's documented result exactly.
+
 **Known limitation:** parsing is real for any BRD, but *generation* (the 5 specialist
 agents) is still pluggable stubs, not a live LLM call. `plan_generator` has a genuine
 fixture-backed rev0→rev1 demo for brd-002 specifically (see below) and falls back to a
