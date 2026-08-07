@@ -43,3 +43,6 @@ their own profile photo and contact info.
 ## Notes
 Low ambiguity. Requirements were reviewed with HR ops twice before submission. No known
 contradictions. Timeline expectation from sponsor: "a few weeks," not formally scoped.
+
+Addendum: HR ops confirmed the CSV bulk-import (FR-4) should validate rows against the existing
+Okta user list before creating new directory entries, to avoid orphaned accounts.
