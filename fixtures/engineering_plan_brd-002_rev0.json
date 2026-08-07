@@ -1,0 +1,35 @@
+{
+  "agent_id": "plan_generator",
+  "brd_id": "brd-002",
+  "run_id": "run-001",
+  "revision_number": 0,
+  "status": "draft",
+  "created_at": "2026-08-03T10:00:00Z",
+  "citations": [],
+  "assumptions": [],
+  "ambiguities_flagged": [
+    {"field": "FR-1.point_rate", "description": "Configurable point rate scope unclear (global vs per-category).", "brd_section_ref": "brd-002-sec-fr"}
+  ],
+  "requirement_ids_addressed": ["FR-1", "FR-2", "FR-3", "FR-5", "NFR-1"],
+  "phases": [
+    {"phase_id": "phase-1", "name": "Discovery & Integration Design", "description": "API contract with order-management system, latency budget analysis.", "sequence": 1, "dependencies": []},
+    {"phase_id": "phase-2", "name": "Core Ledger Build", "description": "Points award/redeem logic, ledger schema, audit trail. Based on similar past e-commerce loyalty projects, this typically takes 3 weeks.", "sequence": 2, "dependencies": ["phase-1"]},
+    {"phase_id": "phase-3", "name": "Admin & Notifications", "description": "Admin rate-config UI, manual grant workflow.", "sequence": 3, "dependencies": ["phase-2"]}
+  ],
+  "risks": [
+    {"risk_id": "risk-1", "description": "Order-management API rate limit insufficient at peak load.", "likelihood": "medium", "impact": "high", "mitigation": "Request batching or caching layer."}
+  ],
+  "milestones": [
+    {"milestone_id": "m-1", "name": "Integration contract signed off", "phase_id": "phase-1", "target_criteria": "API contract approved by order-management team."},
+    {"milestone_id": "m-2", "name": "Ledger passing audit-trail tests", "phase_id": "phase-2", "target_criteria": "100% audit-trail test suite passing."}
+  ],
+  "team_composition": [
+    {"role": "backend engineer", "count": 2, "phase_id": "phase-1"},
+    {"role": "frontend engineer", "count": 1, "phase_id": "phase-3"}
+  ],
+  "reflection_notes": {
+    "self_identified_gaps": ["Expiry notification (FR-6) and peak-load testing phase not yet scoped."],
+    "confidence": "medium",
+    "revision_from_previous": ""
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "$id": "https://brd-system/schemas/parsed_brd.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parsed BRD (Layer 1 output, consumed by Orchestrator)",
+  "type": "object",
+  "properties": {
+    "brd_id": { "type": "string" },
+    "source_hash": { "type": "string", "description": "SHA-256 of raw BRD content; never log raw content." },
+    "file_type": { "type": "string", "enum": ["pdf", "docx", "md", "txt"] },
+    "validation_status": { "type": "string", "enum": ["valid", "malformed", "rejected"] },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "section_id": { "type": "string" },
+          "title": { "type": "string" },
+          "raw_text_ref": { "type": "string", "description": "Pointer to stored text, not embedded here." },
+          "section_type": {
+            "type": "string",
+            "enum": ["objective", "functional_requirement", "non_functional_requirement", "constraint", "stakeholder", "success_metric", "other"]
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "requirement_id": { "type": "string" },
+                "text": { "type": "string" },
+                "classification": { "type": "string", "enum": ["functional", "non_functional", "constraint"] },
+                "priority": { "type": "string", "enum": ["must", "should", "could", "unspecified"] },
+                "is_ambiguous": { "type": "boolean" }
+              },
+              "required": ["requirement_id", "text", "classification"]
+            }
+          }
+        },
+        "required": ["section_id", "title", "section_type"]
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "domain": { "type": "string" },
+        "estimated_complexity": { "type": "string", "enum": ["simple", "medium", "complex"] },
+        "nfr_present": { "type": "boolean" },
+        "contradictions_detected": { "type": "boolean" }
+      }
+    }
+  },
+  "required": ["brd_id", "source_hash", "file_type", "validation_status", "sections"]
+}

@@ -1,0 +1,55 @@
+{
+  "$id": "https://brd-system/schemas/critic_review.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Critic Agent Output",
+  "allOf": [
+    { "$ref": "common.schema.json#/definitions/envelope" },
+    {
+      "type": "object",
+      "properties": {
+        "target_agent_id": { "type": "string", "description": "The agent whose output is being reviewed." },
+        "target_output_ref": { "type": "string", "description": "run_id + revision_number of the output under review." },
+        "scores": {
+          "type": "object",
+          "properties": {
+            "groundedness": { "type": "number", "minimum": 0, "maximum": 5, "description": "Threshold: >=75% claims cited." },
+            "completeness": { "type": "number", "minimum": 0, "maximum": 5, "description": "Threshold: 100% BRD section coverage." },
+            "consistency": { "type": "number", "minimum": 0, "maximum": 5, "description": "Threshold: 0 contradictions." },
+            "actionability": { "type": "number", "minimum": 0, "maximum": 5, "description": "Threshold: >=4/5." }
+          },
+          "required": ["groundedness", "completeness", "consistency", "actionability"]
+        },
+        "overall_score": { "type": "number", "minimum": 0, "maximum": 5 },
+        "badge": { "type": "string", "enum": ["green", "amber", "red"] },
+        "dimension_failures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "dimension": { "type": "string", "enum": ["groundedness", "completeness", "consistency", "actionability"] },
+              "reason": { "type": "string" },
+              "specific_feedback": { "type": "string", "description": "Actionable, targeted at the originating agent for revision." }
+            },
+            "required": ["dimension", "reason", "specific_feedback"]
+          }
+        },
+        "cross_agent_consistency_checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "check": { "type": "string", "description": "e.g. 'schedule aligns with architecture complexity', 'tech-stack familiarity matches timeline'." },
+              "passed": { "type": "boolean" },
+              "detail": { "type": "string" }
+            },
+            "required": ["check", "passed"]
+          }
+        },
+        "revision_required": { "type": "boolean" },
+        "revision_count": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "escalated_to_em": { "type": "boolean", "description": "True once revision_count hits cap (2) and still below threshold." }
+      },
+      "required": ["target_agent_id", "target_output_ref", "scores", "overall_score", "badge", "revision_required", "revision_count"]
+    }
+  ]
+}

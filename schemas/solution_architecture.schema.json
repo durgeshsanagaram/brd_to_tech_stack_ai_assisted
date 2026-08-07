@@ -1,0 +1,59 @@
+{
+  "$id": "https://brd-system/schemas/solution_architecture.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Solution Architect Output",
+  "allOf": [
+    { "$ref": "common.schema.json#/definitions/envelope" },
+    {
+      "type": "object",
+      "properties": {
+        "pattern_selected": {
+          "type": "string",
+          "description": "e.g. 'microservices', 'event-driven', 'monolith', 'CQRS' — should cite architecture_pattern source."
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "component_id": { "type": "string" },
+              "name": { "type": "string" },
+              "responsibility": { "type": "string" },
+              "depends_on": { "type": "array", "items": { "type": "string" } }
+            },
+            "required": ["component_id", "name", "responsibility"]
+          },
+          "minItems": 1
+        },
+        "data_flow": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from_component_id": { "type": "string" },
+              "to_component_id": { "type": "string" },
+              "data_description": { "type": "string" },
+              "protocol": { "type": "string" }
+            },
+            "required": ["from_component_id", "to_component_id", "data_description"]
+          }
+        },
+        "nfr_mapping": {
+          "type": "array",
+          "description": "Ties BRD non-functional requirements to design decisions.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "nfr_requirement_id": { "type": "string", "description": "requirement_id from parsed BRD." },
+              "addressed_by_component_id": { "type": "string" },
+              "explanation": { "type": "string" }
+            },
+            "required": ["nfr_requirement_id", "addressed_by_component_id"]
+          }
+        },
+        "diagram_mermaid": { "type": "string", "description": "Mermaid source for the architecture diagram." }
+      },
+      "required": ["pattern_selected", "components", "data_flow", "nfr_mapping"]
+    }
+  ]
+}

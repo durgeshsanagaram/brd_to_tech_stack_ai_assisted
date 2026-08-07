@@ -1,0 +1,59 @@
+{
+  "$id": "https://brd-system/schemas/orchestrator_state.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Orchestrator State Contract",
+  "type": "object",
+  "properties": {
+    "run_id": { "type": "string" },
+    "brd_id": { "type": "string" },
+    "pipeline_status": {
+      "type": "string",
+      "enum": ["ingesting", "routing", "planning", "designing", "critic_review", "revising", "evaluating", "awaiting_hitl", "exporting", "complete", "failed"]
+    },
+    "agent_states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "agent_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "running", "succeeded", "failed", "retrying"] },
+          "attempt_count": { "type": "integer", "minimum": 0 },
+          "last_error": { "type": ["string", "null"] },
+          "revision_count": { "type": "integer", "minimum": 0, "maximum": 2 }
+        },
+        "required": ["agent_id", "status", "attempt_count"]
+      }
+    },
+    "routing_table": {
+      "type": "array",
+      "description": "Maps parsed BRD sections to the specialist agent(s) responsible.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "section_id": { "type": "string" },
+          "assigned_agents": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["plan_generator", "schedule_estimator", "solution_architect", "poc_planner", "tech_stack_recommender"] }
+          }
+        },
+        "required": ["section_id", "assigned_agents"]
+      }
+    },
+    "guardrail_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["input_validation", "schema_compliance", "hallucination", "scope_creep", "confidentiality", "cross_agent_consistency"] },
+          "agent_id": { "type": "string" },
+          "detail": { "type": "string" },
+          "action_taken": { "type": "string", "enum": ["rejected", "flagged", "auto_corrected", "escalated"] }
+        },
+        "required": ["type", "agent_id", "action_taken"]
+      }
+    },
+    "started_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["run_id", "brd_id", "pipeline_status", "agent_states", "started_at"]
+}

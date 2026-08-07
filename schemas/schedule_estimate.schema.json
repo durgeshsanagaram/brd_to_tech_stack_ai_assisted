@@ -1,0 +1,52 @@
+{
+  "$id": "https://brd-system/schemas/schedule_estimate.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Schedule Estimator Output",
+  "allOf": [
+    { "$ref": "common.schema.json#/definitions/envelope" },
+    {
+      "type": "object",
+      "properties": {
+        "aligned_plan_id": { "type": "string", "description": "run_id/agent_id of the Engineering Plan this schedule is derived from." },
+        "effort_estimates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "phase_id": { "type": "string", "description": "Must match a phase_id from the Engineering Plan." },
+              "effort_person_days": { "type": "number", "minimum": 0 },
+              "basis": { "type": "string", "description": "e.g. 'similar past project timeline', cite via citations[]." }
+            },
+            "required": ["phase_id", "effort_person_days"]
+          }
+        },
+        "timeline": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "phase_id": { "type": "string" },
+              "start_offset_days": { "type": "integer", "minimum": 0 },
+              "duration_days": { "type": "integer", "minimum": 1 }
+            },
+            "required": ["phase_id", "start_offset_days", "duration_days"]
+          }
+        },
+        "resource_allocation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": { "type": "string" },
+              "phase_id": { "type": "string" },
+              "allocation_pct": { "type": "number", "minimum": 0, "maximum": 100 }
+            },
+            "required": ["role", "phase_id", "allocation_pct"]
+          }
+        },
+        "variance_notes": { "type": "string", "description": "Range/confidence, referencing historical variance from project timelines source." }
+      },
+      "required": ["aligned_plan_id", "effort_estimates", "timeline"]
+    }
+  ]
+}

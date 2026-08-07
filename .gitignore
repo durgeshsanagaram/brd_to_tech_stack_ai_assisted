@@ -1,0 +1,10 @@
+chroma_db/
+.venv/
+__pycache__/
+*.pyc
+logs/
+.DS_Store
+
+# Exported terminal/conversation transcripts -- my_macterminal_to_llm_v2.txt
+# contains a real OpenAI API key pasted mid-session; never track these.
+my_macterminal_to_llm*.txt

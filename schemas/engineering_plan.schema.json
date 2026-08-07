@@ -1,0 +1,77 @@
+{
+  "$id": "https://brd-system/schemas/engineering_plan.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Engineering Plan Generator Output",
+  "allOf": [
+    { "$ref": "common.schema.json#/definitions/envelope" },
+    {
+      "type": "object",
+      "properties": {
+        "phases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "phase_id": { "type": "string" },
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "sequence": { "type": "integer", "minimum": 1 },
+              "dependencies": { "type": "array", "items": { "type": "string" } }
+            },
+            "required": ["phase_id", "name", "sequence"]
+          },
+          "minItems": 1
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "risk_id": { "type": "string" },
+              "description": { "type": "string" },
+              "likelihood": { "type": "string", "enum": ["low", "medium", "high"] },
+              "impact": { "type": "string", "enum": ["low", "medium", "high"] },
+              "mitigation": { "type": "string" }
+            },
+            "required": ["risk_id", "description", "likelihood", "impact"]
+          }
+        },
+        "milestones": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "milestone_id": { "type": "string" },
+              "name": { "type": "string" },
+              "phase_id": { "type": "string" },
+              "target_criteria": { "type": "string" }
+            },
+            "required": ["milestone_id", "name", "phase_id"]
+          }
+        },
+        "team_composition": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": { "type": "string" },
+              "count": { "type": "integer", "minimum": 1 },
+              "phase_id": { "type": "string" }
+            },
+            "required": ["role", "count"]
+          }
+        },
+        "reflection_notes": {
+          "type": "object",
+          "description": "Self-review step output before handoff to Critic.",
+          "properties": {
+            "self_identified_gaps": { "type": "array", "items": { "type": "string" } },
+            "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+            "revision_from_previous": { "type": "string", "description": "What changed vs. prior revision, if any." }
+          }
+        }
+      },
+      "required": ["phases", "risks", "milestones", "team_composition"]
+    }
+  ]
+}

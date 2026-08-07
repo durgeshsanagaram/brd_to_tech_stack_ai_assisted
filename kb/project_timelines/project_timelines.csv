@@ -1,0 +1,9 @@
+project_id,source_type,title,domain,complexity,duration_weeks,team_size,variance_pct,notes
+proj-t01,project_timeline,Employee Directory Refresh,internal-tools,simple,5,2,10,Delivered on time; SSO spike de-risked in week 1 as planned.
+proj-t02,project_timeline,Internal Ticketing Tool Revamp,internal-tools,simple,6,2,15,One week slip due to unplanned auth-provider migration mid-project.
+proj-t03,project_timeline,Vendor Contact Directory,internal-tools,simple,4,1,5,"Smallest project on record; single engineer, no integration risk."
+proj-t04,project_timeline,Customer Loyalty Points Engine,e-commerce,medium,11,4,20,One extra week added in load-testing phase after first pass failed peak throughput target.
+proj-t05,project_timeline,Promotions & Coupon Engine,e-commerce,medium,9,3,10,"On time; reused checkout integration pattern from a prior project, reducing discovery time."
+proj-t06,project_timeline,Order Returns Workflow Automation,e-commerce,medium,10,3,25,Notable variance from an underestimated edge-case volume in returns policy logic.
+proj-t07,project_timeline,Real-Time Fraud Detection Platform,fintech,complex,24,9,30,Highest variance in dataset; latency-vs-explainability trade-off caused a 3-week discovery extension.
+proj-t08,project_timeline,Real-Time Payment Settlement Reconciliation,fintech,complex,20,7,18,Delivered close to plan; benefited from an existing event-driven backbone from a prior project.

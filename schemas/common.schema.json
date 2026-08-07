@@ -1,0 +1,71 @@
+{
+  "$id": "https://brd-system/schemas/common.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Common Definitions",
+  "definitions": {
+    "citation": {
+      "type": "object",
+      "description": "Pointer to a retrieved RAG chunk backing a claim.",
+      "properties": {
+        "source_id": { "type": "string", "description": "Document ID in the vector DB, e.g. 'std-eng-001'." },
+        "source_type": {
+          "type": "string",
+          "enum": ["past_brd", "plan_template", "architecture_pattern", "project_timeline", "org_standard", "tech_stack_decision"]
+        },
+        "chunk_id": { "type": "string" },
+        "excerpt": { "type": "string", "maxLength": 500 },
+        "similarity_score": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "required": ["source_id", "source_type", "chunk_id"]
+    },
+    "assumption": {
+      "type": "object",
+      "properties": {
+        "description": { "type": "string" },
+        "reason": { "type": "string" },
+        "conservative_default_applied": { "type": "boolean" }
+      },
+      "required": ["description", "reason"]
+    },
+    "ambiguity_flag": {
+      "type": "object",
+      "properties": {
+        "field": { "type": "string", "description": "Which output field or BRD requirement is ambiguous." },
+        "description": { "type": "string" },
+        "brd_section_ref": { "type": "string" }
+      },
+      "required": ["field", "description"]
+    },
+    "envelope": {
+      "type": "object",
+      "description": "Fields every agent output must carry, in addition to its own payload.",
+      "properties": {
+        "agent_id": { "type": "string" },
+        "brd_id": { "type": "string" },
+        "run_id": { "type": "string", "description": "Unique ID for this orchestration run." },
+        "revision_number": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "status": { "type": "string", "enum": ["draft", "revised", "final"] },
+        "created_at": { "type": "string", "format": "date-time" },
+        "citations": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/citation" },
+          "minItems": 0
+        },
+        "assumptions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/assumption" }
+        },
+        "ambiguities_flagged": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/ambiguity_flag" }
+        },
+        "requirement_ids_addressed": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "requirement_id values (from the parsed BRD) this output addresses. Makes the Critic's completeness check exact instead of inferred from free text."
+        }
+      },
+      "required": ["agent_id", "brd_id", "run_id", "revision_number", "status", "created_at", "citations"]
+    }
+  }
+}

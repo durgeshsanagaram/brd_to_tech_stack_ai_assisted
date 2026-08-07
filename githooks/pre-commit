@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Blocks the commit if any staged BRD file fails Layer-1 parsing/schema
+# validation (scripts/brd_parser.py). Fast, staged-file-only check -- the full
+# pipeline (ingest + all 5 agents + Critic + guardrails) is too slow to run on
+# every commit, so that lives in the post-commit hook instead.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+staged_brds=$(git diff --cached --name-only --diff-filter=ACM -- 'kb/past_brds/*.md' 'kb/past_brds/*.txt' || true)
+
+if [ -z "$staged_brds" ]; then
+  exit 0
+fi
+
+if [ -f .venv/bin/activate ]; then
+  source .venv/bin/activate
+fi
+
+fail=0
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  echo "pre-commit: validating $f"
+  # Two checks, same order run_all.py uses: (1) guardrails.validate_brd_file --
+  # file type/non-empty/structure, the check that actually rejects an empty or
+  # garbage file; brd_parser.py alone does not, since an empty file still
+  # parses into a schema-valid (just empty) parsed_brd. (2) brd_parser.py
+  # --validate -- confirms it parses into a schema-valid Layer 1 output.
+  if ! python -c "
+import sys
+sys.path.insert(0, 'scripts')
+from guardrails import validate_brd_file
+ok, event = validate_brd_file('$f')
+if not ok:
+    print(f'  [input_validation] {event[\"detail\"]}')
+sys.exit(0 if ok else 1)
+"; then
+    echo "pre-commit: FAILED input validation for $f"
+    fail=1
+    continue
+  fi
+  if ! python scripts/brd_parser.py "$f" --validate > /tmp/precommit_brd_parse.log 2>&1; then
+    echo "pre-commit: FAILED to parse/validate $f"
+    cat /tmp/precommit_brd_parse.log
+    fail=1
+  fi
+done <<< "$staged_brds"
+
+if [ "$fail" -ne 0 ]; then
+  echo "pre-commit: one or more staged BRDs failed validation -- commit blocked."
+  echo "pre-commit: fix the file(s) above, or 'git commit --no-verify' to bypass (not recommended)."
+  exit 1
+fi
+
+echo "pre-commit: all staged BRDs parsed and schema-validated OK."
+exit 0

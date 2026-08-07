@@ -1,0 +1,45 @@
+{
+  "agent_id": "plan_generator",
+  "brd_id": "brd-002",
+  "run_id": "run-001",
+  "revision_number": 1,
+  "status": "revised",
+  "created_at": "2026-08-03T10:15:00Z",
+  "citations": [
+    {"source_id": "template-002", "source_type": "plan_template", "chunk_id": "template-002#0", "excerpt": "Discovery & Integration Design (1.5 weeks) -- API contract with order-management system, latency budget analysis.", "similarity_score": 0.91},
+    {"source_id": "template-002", "source_type": "plan_template", "chunk_id": "template-002#1", "excerpt": "Core Ledger Build (3 weeks) -- points award/redeem logic, ledger schema, audit trail.", "similarity_score": 0.88},
+    {"source_id": "brd-002", "source_type": "past_brd", "chunk_id": "brd-002#2", "excerpt": "FR-1: Award points on order completion (1 point per $1 spent, configurable rate). FR-2: Redeem points at checkout as a discount (max 50% of order value).", "similarity_score": 0.77}
+  ],
+  "assumptions": [
+    {"description": "Configurable point rate is a single global rate, not per-category.", "reason": "BRD FR-1 does not specify per-category rates; conservative interpretation applied per guardrail policy.", "conservative_default_applied": true}
+  ],
+  "ambiguities_flagged": [
+    {"field": "FR-1.point_rate", "description": "Configurable point rate scope unclear (global vs per-category).", "brd_section_ref": "brd-002-sec-fr"}
+  ],
+  "requirement_ids_addressed": ["FR-1", "FR-2", "FR-3", "FR-4", "FR-5", "FR-6", "NFR-1", "NFR-2", "NFR-3", "NFR-4"],
+  "phases": [
+    {"phase_id": "phase-1", "name": "Discovery & Integration Design", "description": "API contract with order-management system, latency budget analysis against NFR-1's 200ms budget.", "sequence": 1, "dependencies": []},
+    {"phase_id": "phase-2", "name": "Core Ledger Build", "description": "Points award/redeem logic (FR-1, FR-2), ledger schema with full audit trail (NFR-3), PCI-scope boundary review (NFR-4). Duration per plan_template#template-002: 3 weeks.", "sequence": 2, "dependencies": ["phase-1"]},
+    {"phase_id": "phase-3", "name": "Admin & Notifications", "description": "Admin rate-config UI (FR-5), manual grant workflow, points balance/history view (FR-3), expiry notification job (FR-4, FR-6).", "sequence": 3, "dependencies": ["phase-2"]},
+    {"phase_id": "phase-4", "name": "Load & Peak Testing", "description": "Simulate peak order volume per NFR-2 (~15,000 orders/hour); verify NFR-1 latency budget under load.", "sequence": 4, "dependencies": ["phase-3"]}
+  ],
+  "risks": [
+    {"risk_id": "risk-1", "description": "Order-management API rate limit insufficient at peak load.", "likelihood": "medium", "impact": "high", "mitigation": "Request batching or caching layer; validate in phase 4."},
+    {"risk_id": "risk-2", "description": "PCI scope expansion if ledger design touches payment data.", "likelihood": "low", "impact": "high", "mitigation": "Explicit architecture review checkpoint before phase 2 build, per NFR-4."}
+  ],
+  "milestones": [
+    {"milestone_id": "m-1", "name": "Integration contract signed off", "phase_id": "phase-1", "target_criteria": "API contract approved by order-management team."},
+    {"milestone_id": "m-2", "name": "Ledger passing audit-trail tests", "phase_id": "phase-2", "target_criteria": "100% audit-trail test suite passing."},
+    {"milestone_id": "m-3", "name": "Load test passing at 1.5x expected peak", "phase_id": "phase-4", "target_criteria": "NFR-2/NFR-1 targets met under 1.5x peak simulation."}
+  ],
+  "team_composition": [
+    {"role": "backend engineer", "count": 2, "phase_id": "phase-1"},
+    {"role": "frontend engineer", "count": 1, "phase_id": "phase-3"},
+    {"role": "QA/load-test specialist", "count": 1, "phase_id": "phase-4"}
+  ],
+  "reflection_notes": {
+    "self_identified_gaps": [],
+    "confidence": "high",
+    "revision_from_previous": "Added phase-4 (Load & Peak Testing) to cover NFR-2; added expiry notification to phase-3 to cover FR-4/FR-6; added PCI-scope risk to cover NFR-4; cited template-002 for the phase-2 duration instead of asserting it as a general fact; added a labeled assumption for the point-rate ambiguity."
+  }
+}

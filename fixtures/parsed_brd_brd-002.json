@@ -1,0 +1,38 @@
+{
+  "brd_id": "brd-002",
+  "source_hash": "sha256:placeholder-not-a-real-hash",
+  "file_type": "md",
+  "validation_status": "valid",
+  "sections": [
+    {
+      "section_id": "brd-002-sec-fr",
+      "title": "Functional Requirements",
+      "section_type": "functional_requirement",
+      "requirements": [
+        {"requirement_id": "FR-1", "text": "Award points on order completion (1 point per $1 spent, configurable rate).", "classification": "functional", "priority": "must", "is_ambiguous": false},
+        {"requirement_id": "FR-2", "text": "Redeem points at checkout as a discount (max 50% of order value).", "classification": "functional", "priority": "must", "is_ambiguous": false},
+        {"requirement_id": "FR-3", "text": "Points balance and transaction history visible in customer account page.", "classification": "functional", "priority": "must", "is_ambiguous": false},
+        {"requirement_id": "FR-4", "text": "Points expire after 12 months of account inactivity.", "classification": "functional", "priority": "should", "is_ambiguous": false},
+        {"requirement_id": "FR-5", "text": "Admin dashboard to adjust point rates and issue manual point grants.", "classification": "functional", "priority": "must", "is_ambiguous": false},
+        {"requirement_id": "FR-6", "text": "Email notification when points are about to expire (30 days prior).", "classification": "functional", "priority": "should", "is_ambiguous": false}
+      ]
+    },
+    {
+      "section_id": "brd-002-sec-nfr",
+      "title": "Non-Functional Requirements",
+      "section_type": "non_functional_requirement",
+      "requirements": [
+        {"requirement_id": "NFR-1", "text": "Points calculation must complete within checkout flow with no more than 200ms added latency.", "classification": "non_functional", "priority": "must", "is_ambiguous": false},
+        {"requirement_id": "NFR-2", "text": "System must handle Black Friday peak load: ~15,000 orders/hour.", "classification": "non_functional", "priority": "must", "is_ambiguous": false},
+        {"requirement_id": "NFR-3", "text": "Points ledger must be auditable.", "classification": "non_functional", "priority": "must", "is_ambiguous": false},
+        {"requirement_id": "NFR-4", "text": "PCI-DSS scope must not expand.", "classification": "non_functional", "priority": "must", "is_ambiguous": false}
+      ]
+    }
+  ],
+  "metadata": {
+    "domain": "e-commerce",
+    "estimated_complexity": "medium",
+    "nfr_present": true,
+    "contradictions_detected": false
+  }
+}

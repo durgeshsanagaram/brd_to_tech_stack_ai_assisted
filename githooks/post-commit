@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Runs the full pipeline (ingest -> 5 agents -> Critic -> guardrails, via
+# scripts/run_all.py) after a commit that touches kb/. Deliberately does not
+# fail the commit -- by the time post-commit runs, the commit has already
+# landed, so this only reports; it can't block anything at this point (that's
+# what the pre-commit hook is for).
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+changed=$(git diff-tree --no-commit-id --name-only -r HEAD -- kb/ || true)
+if [ -z "$changed" ]; then
+  exit 0
+fi
+
+if [ -f .venv/bin/activate ]; then
+  source .venv/bin/activate
+fi
+
+# Run against whichever BRD changed, if one did; otherwise fall back to
+# run_all.py's default (brd-002) so a KB-only change (e.g. a new plan
+# template) still exercises the pipeline against something.
+brd=$(echo "$changed" | grep -E '^kb/past_brds/.*\.(md|txt)$' | head -1 || true)
+brd_arg=()
+if [ -n "$brd" ]; then
+  brd_arg=(--brd "$brd")
+fi
+
+echo "post-commit: kb/ changed in this commit -- running scripts/run_all.py ${brd_arg[*]}"
+python scripts/run_all.py "${brd_arg[@]}"

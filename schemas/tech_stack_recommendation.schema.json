@@ -1,0 +1,50 @@
+{
+  "$id": "https://brd-system/schemas/tech_stack_recommendation.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Tech Stack Recommender Output",
+  "allOf": [
+    { "$ref": "common.schema.json#/definitions/envelope" },
+    {
+      "type": "object",
+      "properties": {
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "properties": {
+              "option_id": { "type": "string" },
+              "stack_name": { "type": "string" },
+              "components": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "layer": { "type": "string", "description": "e.g. 'frontend', 'backend', 'data', 'infra'." },
+                    "technology": { "type": "string" }
+                  },
+                  "required": ["layer", "technology"]
+                }
+              },
+              "tradeoffs": {
+                "type": "object",
+                "properties": {
+                  "scalability": { "type": "string" },
+                  "team_familiarity": { "type": "string" },
+                  "integration_risk": { "type": "string" },
+                  "cost": { "type": "string" }
+                },
+                "required": ["scalability", "team_familiarity", "integration_risk", "cost"]
+              }
+            },
+            "required": ["option_id", "stack_name", "components", "tradeoffs"]
+          }
+        },
+        "recommended_option_id": { "type": "string" },
+        "rationale": { "type": "string", "description": "Should cite tech_stack_decision log entries." }
+      },
+      "required": ["options", "recommended_option_id", "rationale"]
+    }
+  ]
+}
