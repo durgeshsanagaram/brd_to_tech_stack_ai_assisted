@@ -1,0 +1,48 @@
+name: CI
+
+# Runs the same checks documented in README.md's "Running It" section, in the
+# same order, so a green check here means "someone actually ran the demo
+# commands and they passed" -- not a separate/different notion of "passing."
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Layer 1 -- parse every BRD in the KB
+        run: |
+          for f in kb/past_brds/*.md; do
+            echo "::group::$f"
+            python scripts/brd_parser.py "$f" --validate
+            echo "::endgroup::"
+          done
+
+      - name: Guardrails suite (input validation, schema, hallucination, scope creep, confidentiality)
+        run: python scripts/guardrails.py --demo
+
+      - name: Critic rubric scoring (rev0 Red -> rev1 Green)
+        run: python scripts/critic.py --demo
+
+      - name: Full pipeline (ingest + 5 agents + Critic + guardrails + revision loop)
+        # No OPENAI_API_KEY secret required -- falls back to the local
+        # embedding model per scripts/common.py, same as any contributor
+        # running this without a key. Set the OPENAI_API_KEY repo secret to
+        # exercise the pipeline against the documented text-embedding-3-small
+        # config instead (see README's "Don't mix modes" note).
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python scripts/run_all.py
