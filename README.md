@@ -52,6 +52,7 @@ scripts/
   run_all.py             Combines every script above into one pipeline run (see "Running Everything Together")
   watch.py               Polls kb/ and re-runs run_all.py automatically on any change
 fixtures/              Sample agent outputs / parsed BRD used by the demos below
+githooks/              pre-commit (validates staged BRDs) / post-commit (runs run_all.py) -- see "Third option: git hooks"
 docs/                  Architecture, RAG design, evaluation report, operationalization plan
 requirements.txt
 ```
