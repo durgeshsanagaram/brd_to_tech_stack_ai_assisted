@@ -1,5 +1,7 @@
 # Multi-Agent BRD-to-Engineering System
 
+[![CI](https://github.com/durgeshsanagaram/brd_to_tech_stack_ai_assisted/actions/workflows/ci.yml/badge.svg)](https://github.com/durgeshsanagaram/brd_to_tech_stack_ai_assisted/actions/workflows/ci.yml)
+
 Capstone 1: a multi-agent system that turns a raw Business Requirements Document into engineering
 artifacts (plan, schedule, architecture, PoC scope, tech-stack recommendation) — grounded in a
 RAG knowledge base, validated by a Critic agent with a bounded revision loop, and gated by
