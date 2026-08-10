@@ -2,3 +2,4 @@ chromadb
 tiktoken
 openai
 jsonschema
+pytest

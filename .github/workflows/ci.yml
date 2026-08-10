@@ -31,6 +31,14 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: RAG retrieval test suite (tests/test_retrieval.py)
+        # Same OPENAI_API_KEY behavior as the full-pipeline step below --
+        # verified to pass in both embedding modes (see the module docstring
+        # of tests/test_retrieval.py).
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python -m pytest tests/ -v
+
       - name: Guardrails suite (input validation, schema, hallucination, scope creep, confidentiality)
         run: python scripts/guardrails.py --demo
 
