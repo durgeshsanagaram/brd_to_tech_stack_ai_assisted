@@ -1,0 +1,22 @@
+[
+  {
+    "file": "query-01.mp3",
+    "text": "What is the overall Critic score for the engineering plan?"
+  },
+  {
+    "file": "query-02.mp3",
+    "text": "Why did the plan generator receive an amber badge?"
+  },
+  {
+    "file": "query-03.mp3",
+    "text": "Which architecture pattern was selected for the loyalty points engine?"
+  },
+  {
+    "file": "query-04.mp3",
+    "text": "List the requirements that are still missing from the current revision."
+  },
+  {
+    "file": "query-05.mp3",
+    "text": "Approve the plan generator output and proceed to the next agent."
+  }
+]

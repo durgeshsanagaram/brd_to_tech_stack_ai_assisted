@@ -53,9 +53,12 @@ scripts/
   orchestrator.py        Routes BRD -> 5 specialist agents -> Critic -> guardrails, drives the revision loop end-to-end
   run_all.py             Combines every script above into one pipeline run (see "Running Everything Together")
   watch.py               Polls kb/ and re-runs run_all.py automatically on any change
+  asr.py                 ASR (Whisper) for EM voice queries -- Voice Interface stretch goal, see below
+  generate_voice_samples.py  Synthesizes the 5 sample voice queries asr.py --demo verifies against
+samples/voice_queries/ 5 synthesized EM voice queries (mp3) + ground_truth.json, for ASR verification
 fixtures/              Sample agent outputs / parsed BRD used by the demos below
 githooks/              pre-commit (validates staged BRDs) / post-commit (runs run_all.py) -- see "Third option: git hooks"
-tests/                 pytest suite -- retrieval, guardrails, and Critic scoring regression tests (see below)
+tests/                 pytest suite -- retrieval, guardrails, Critic scoring, and ASR regression tests (see below)
 docs/                  Architecture, RAG design, evaluation report, operationalization plan
 requirements.txt
 ```
@@ -254,6 +257,32 @@ fixture-backed rev0→rev1 demo for brd-002 specifically (see below) and falls b
 minimal generic stub plan for any other BRD; the other 4 agents are minimal RAG-grounded
 stubs for every BRD regardless of which one you pass. Guardrails, retrieval, and the Critic
 all run for real against whatever BRD you point at.
+
+## Voice Interface (stretch goal, partial)
+
+BRD Section 14's "Voice Interface Agent" stretch goal has four pieces: ASR (Whisper), RAG-connected
+voice-query answering, TTS spoken responses, and a voice approval/rejection flow into the
+Orchestrator. **Only ASR is implemented.** The other three are not — this is a deliberate partial
+implementation of a stretch goal, not a claim the whole thing is done.
+
+`scripts/asr.py` transcribes a spoken query to text via OpenAI's Whisper API (`whisper-1`), so the
+result could be handed to `scripts/query.py` or the Orchestrator exactly like a typed query would
+be — that wiring itself isn't built yet. No offline fallback (unlike embeddings): Whisper locally
+needs `openai-whisper` + torch + ffmpeg, a multi-GB footprint not justified for this scope, so this
+requires `OPENAI_API_KEY` with no degraded path.
+
+```bash
+python scripts/asr.py samples/voice_queries/query-01.mp3         # transcribe one file
+python scripts/asr.py --demo                                     # transcribe + verify all 5 samples
+```
+
+`samples/voice_queries/` holds 5 synthesized EM voice queries (via OpenAI TTS —
+`scripts/generate_voice_samples.py`, reproducible from source, not opaque binary fixtures) plus
+`ground_truth.json` recording the exact text each was generated from. `--demo` transcribes all 5
+and checks each transcript against its ground truth by word overlap — satisfies BRD Section 14's
+minimum-viable bar ("ASR verified on at least five sample queries") directly:
+verified 5/5 passing. `tests/test_asr.py` codifies this as a regression test (skipped, not failed,
+when `OPENAI_API_KEY` is unset, since there's no offline path to fall back to).
 
 ## Notes on What's a Live Call vs. a Stand-In
 
