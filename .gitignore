@@ -6,6 +6,11 @@ logs/
 .DS_Store
 .pytest_cache/
 
+# Regenerated every time tts.py --demo / tests/test_tts.py runs -- unlike
+# samples/voice_queries/ (static ground-truth inputs), this is generated
+# output, same treatment as chroma_db/logs.
+samples/tts_summaries/
+
 # Exported terminal/conversation transcripts -- my_macterminal_to_llm_v2.txt
 # contains a real OpenAI API key pasted mid-session; never track these.
 my_macterminal_to_llm*.txt
