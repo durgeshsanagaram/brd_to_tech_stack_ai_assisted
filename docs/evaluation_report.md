@@ -126,8 +126,11 @@ agents, Critic + guardrails at every handoff, capped revision loop, structured J
 | tech_stack_recommender | succeeded | 0 | 🟢 Green | 4.62 |
 
 - Guardrail events triggered during this run: **0**
-- Cross-agent consistency check ("schedule `effort_estimates` reference valid plan `phase_id`s"):
-  **PASS**
+- Cross-agent consistency checks: **both PASS** — "schedule `effort_estimates` reference valid
+  plan `phase_id`s" and "PoC `modular_boundaries` reference valid architecture `component_id`s".
+  The second check was dormant (a real bug, not a design gap — see
+  `docs/guardrails_safety.md` §6) until `tests/test_critic.py` caught it; every full-pipeline run
+  before that fix only ever exercised the first check.
 - Final `pipeline_status`: `complete`; final state validated against
   `schemas/orchestrator_state.schema.json`: **PASSED**
 

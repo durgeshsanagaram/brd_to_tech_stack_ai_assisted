@@ -31,10 +31,11 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: RAG retrieval test suite (tests/test_retrieval.py)
+      - name: pytest suite (retrieval, guardrails, Critic scoring -- tests/)
         # Same OPENAI_API_KEY behavior as the full-pipeline step below --
-        # verified to pass in both embedding modes (see the module docstring
-        # of tests/test_retrieval.py).
+        # verified to pass in both embedding modes (see tests/test_retrieval.py's
+        # module docstring). Guardrails/Critic tests don't touch embeddings at
+        # all, so they're unaffected either way.
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python -m pytest tests/ -v

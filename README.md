@@ -55,7 +55,7 @@ scripts/
   watch.py               Polls kb/ and re-runs run_all.py automatically on any change
 fixtures/              Sample agent outputs / parsed BRD used by the demos below
 githooks/              pre-commit (validates staged BRDs) / post-commit (runs run_all.py) -- see "Third option: git hooks"
-tests/                 pytest suite -- tests/test_retrieval.py (RAG retrieval regression tests, see below)
+tests/                 pytest suite -- retrieval, guardrails, and Critic scoring regression tests (see below)
 docs/                  Architecture, RAG design, evaluation report, operationalization plan
 requirements.txt
 ```
@@ -108,14 +108,22 @@ python scripts/query.py "real-time fraud detection scoring pipeline" --agent sol
 `poc_planner`, `tech_stack_recommender`, `critic`). Below the similarity threshold, it prints the
 "no RAG hits" guardrail message instead of forcing a result.
 
-**Retrieval regression tests:** `tests/test_retrieval.py` codifies the manual checks above (plus
-a couple more) so they run automatically instead of being re-verified by hand every time:
-threshold enforcement, the no-hits path on an irrelevant query, per-agent source_type scoping, and
-a regression test for a real retrieval-starvation bug found during development (querying multiple
-source_types with raw requirement text let a BRD's own chunks crowd out `plan_template`
-precedent — fixed via per-source-type query framing, tested here against all 3 KB BRDs, not just
-the demo one). Runs against a real Chroma collection built from `kb/`, not a mock, in either
-embedding mode (verified passing with and without `OPENAI_API_KEY`):
+**Regression test suite:** `tests/` codifies checks that were previously only verified by hand:
+
+- `test_retrieval.py` — threshold enforcement, the no-hits path on an irrelevant query, per-agent
+  source_type scoping, and a regression test for a real retrieval-starvation bug found during
+  development (querying multiple source_types with raw requirement text let a BRD's own chunks
+  crowd out `plan_template` precedent — fixed via per-source-type query framing, tested here
+  against all 3 KB BRDs). Runs against a real Chroma collection built from `kb/`, not a mock, in
+  either embedding mode (verified passing with and without `OPENAI_API_KEY`).
+- `test_guardrails.py` — all 5 guardrails (input validation, schema compliance, hallucination
+  detection, scope creep, confidentiality-safe logging), including that `run_guardrails()`
+  correctly short-circuits the remaining checks on a schema failure.
+- `test_critic.py` — rule-based groundedness/completeness, cross-agent structural checks, badge
+  boundary math, revision-cap enforcement, and an end-to-end `review()` regression pinned to the
+  exact documented rev0 Red (3.38) → rev1 Green (4.62) numbers from Section 4 below. Writing this
+  suite caught a real dormant bug in the PoC↔architecture consistency check — see
+  `docs/guardrails_safety.md` §6 for the full story.
 
 ```bash
 python -m pytest tests/ -v

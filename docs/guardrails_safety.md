@@ -120,8 +120,19 @@ if they'd been checked against each other.
 + the LLM judge's contradiction-detection instructions in `prompts/critic_rubric.md`):
 - **Structural (exact):** schedule `effort_estimates[].phase_id` must exist in the plan's
   `phases[]`; PoC `modular_boundaries[].maps_to_component_id` must exist in the architecture's
-  `components[]`. Verified in the full pipeline run (`docs/evaluation_report.md` §5): the
-  phase-id check passed.
+  `components[]`. Verified in the full pipeline run (`docs/evaluation_report.md` §5): both checks
+  now pass. The second check was dormant until the pytest suite (`tests/test_critic.py`) caught it
+  — see the note below.
+
+**A real bug the test suite caught (documented, not swept under the rug):** the PoC↔architecture
+check was silently never firing in any pipeline run prior to `tests/test_critic.py` being written.
+`cross_agent_consistency_checks` read the PoC output via `other_outputs.get("poc_planner")`, but
+every call site passes the PoC output as `target_output` instead — so `poc` was always `None` and
+the `if architecture and poc:` guard never entered, in every orchestrator run this project has ever
+produced. Fixed to mirror the schedule↔plan check's pattern (read the PoC's own
+`modular_boundaries` from `target_output`, gated on `target_output["agent_id"] == "poc_planner"`).
+Re-verified live afterward: `python scripts/orchestrator.py --demo` now prints both consistency
+checks under "Final cross-agent consistency checks" instead of just one.
 - **Semantic (LLM-judged):** the rubric prompt asks the judge to identify substantive
   contradictions the structural check can't catch — e.g. a tech-stack recommendation whose "team
   familiarity" trade-off contradicts the plan's assumed ramp-up time. Each contradiction must be

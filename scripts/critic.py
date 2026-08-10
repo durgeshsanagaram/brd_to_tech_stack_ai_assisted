@@ -157,12 +157,11 @@ def cross_agent_consistency_checks(target_output, other_outputs):
         })
 
     architecture = other_outputs.get("solution_architect")
-    poc = other_outputs.get("poc_planner")
-    if architecture and poc:
+    if target_output["agent_id"] == "poc_planner" and architecture:
         component_ids = {c["component_id"] for c in architecture.get("components", [])}
         poc_refs = {
             m["maps_to_component_id"]
-            for m in poc.get("modular_boundaries", [])
+            for m in target_output.get("modular_boundaries", [])
             if m.get("maps_to_component_id")
         }
         unknown = poc_refs - component_ids
