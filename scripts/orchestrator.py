@@ -24,6 +24,8 @@ Usage:
 import argparse
 import copy
 import json
+import re
+import sys
 import time
 import uuid
 from pathlib import Path
@@ -282,6 +284,61 @@ def build_routing_table(parsed_brd):
     return table
 
 
+# --------------------------------------------------------------------------
+# Human-in-the-loop: voice/text approval at the awaiting_hitl gate. Real
+# control-flow decision (does the pipeline advance or stop), not a read-only
+# convenience like ASR/TTS/RAG-voice-queries -- so it gets a keyword
+# classifier that's easy to audit, not an LLM call whose judgment would be
+# harder to hold accountable for a wrong branch.
+# --------------------------------------------------------------------------
+
+APPROVE_KEYWORDS = ("approve", "approved", "accept", "looks good", "proceed", "go ahead", "sounds good")
+REJECT_KEYWORDS = ("reject", "rejected", "revise", "send back", "redo", "needs work", "not approved", "no good")
+
+# "Not approved" legitimately contains the substring "approve", which would
+# otherwise spuriously trigger APPROVE_KEYWORDS too, collapsing an
+# unambiguous rejection into "unclear". Strip negated-approval phrases
+# before matching approve keywords; REJECT_KEYWORDS already covers "not
+# approved" explicitly, and this pattern catches variants like "not
+# approve"/"don't approve" too.
+_NEGATED_APPROVAL_RE = re.compile(r"\b(not|n't|never)\s+approv\w*\b")
+
+
+def classify_hitl_decision(text):
+    """Keyword-based intent classifier for a transcribed/typed EM decision.
+    Returns 'approve', 'reject', or 'unclear' (both/neither keyword set
+    matched -- ambiguous input is not guessed at, per BRD Section 8's
+    ambiguity policy)."""
+    normalized = text.lower()
+    approve_search_text = _NEGATED_APPROVAL_RE.sub(" ", normalized)
+    approve_hit = any(kw in approve_search_text for kw in APPROVE_KEYWORDS)
+    reject_hit = any(kw in normalized for kw in REJECT_KEYWORDS) or bool(_NEGATED_APPROVAL_RE.search(normalized))
+    if approve_hit and not reject_hit:
+        return "approve"
+    if reject_hit and not approve_hit:
+        return "reject"
+    return "unclear"
+
+
+def resolve_hitl_decision(approval_audio=None, approval_text=None):
+    """Determines the EM's approve/reject decision for the awaiting_hitl
+    gate. Priority: explicit audio (voice, via scripts/asr.py) > explicit
+    text > interactive stdin prompt (only if attached to a real terminal,
+    so this never blocks an automated run) > auto-approve default for
+    non-interactive runs with no input supplied (e.g. CI/--demo with neither
+    flag set) -- logged explicitly by the caller, not silently skipped."""
+    if approval_audio:
+        from asr import transcribe
+        transcript = transcribe(approval_audio)
+        return {"decision": classify_hitl_decision(transcript), "source": "voice", "transcript": transcript}
+    if approval_text:
+        return {"decision": classify_hitl_decision(approval_text), "source": "text", "transcript": approval_text}
+    if sys.stdin.isatty():
+        typed = input("EM decision -- approve or reject this run's outputs? ")
+        return {"decision": classify_hitl_decision(typed), "source": "text", "transcript": typed}
+    return {"decision": "approve", "source": "default", "transcript": None}
+
+
 def new_state(run_id, brd_id):
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     return {
@@ -391,7 +448,7 @@ def run_agent_with_critic_loop(agent_id, parsed_brd, collection, state, run_id):
 DEFAULT_BRD_FILE = REPO_ROOT / "kb" / "past_brds" / "brd-002-medium.md"
 
 
-def run_pipeline(brd_path=None, persist_dir=None):
+def run_pipeline(brd_path=None, persist_dir=None, approval_audio=None, approval_text=None):
     brd_file = Path(brd_path) if brd_path else DEFAULT_BRD_FILE
     run_id = f"run-{uuid.uuid4().hex[:8]}"
     # brd_id is a placeholder until Layer 1 parsing below resolves the real
@@ -457,7 +514,41 @@ def run_pipeline(brd_path=None, persist_dir=None):
 
     state["pipeline_status"] = "evaluating"
     state["pipeline_status"] = "awaiting_hitl"
-    state["pipeline_status"] = "complete"  # demo: auto-approve, no live EM in this harness
+
+    # Human-in-the-loop gate: a real decision, not a pass-through. Voice
+    # (--approval-audio) and typed text (--approval-text) both flow through
+    # the same classify_hitl_decision() logic; see resolve_hitl_decision's
+    # docstring for the interactive-terminal and non-interactive-default
+    # fallback behavior.
+    hitl = resolve_hitl_decision(approval_audio=approval_audio, approval_text=approval_text)
+    detail = f"EM decision: {hitl['decision']} (source={hitl['source']}"
+    if hitl["transcript"]:
+        detail += f", heard: {hitl['transcript']!r}"
+    detail += ")"
+    # action_taken records what happened as a result, not the raw decision
+    # label -- 'unclear' maps to 'escalated' since that's the actual outcome.
+    action_taken = {"approve": "approved", "reject": "rejected", "unclear": "escalated"}[hitl["decision"]]
+    state["guardrail_events"].append({
+        "type": "hitl_decision", "agent_id": "orchestrator", "detail": detail, "action_taken": action_taken,
+    })
+
+    if hitl["decision"] == "approve":
+        state["pipeline_status"] = "complete"
+    else:
+        # 'reject' or 'unclear': no further automated revision path exists
+        # here -- plan_generator's fixture-backed demo only has a rev0 and a
+        # rev1 (see plan_generator_fn), there's no rev2 to fall back to, and
+        # guessing at an ambiguous decision would violate the same
+        # conservative-default policy the rest of this system follows.
+        # Honest terminal state, not a fake extra loop.
+        state["pipeline_status"] = "failed"
+        state["guardrail_events"].append({
+            "type": "hitl_decision", "agent_id": "orchestrator",
+            "detail": "EM did not approve (or decision was unclear) and no further automated "
+                      "revision is available for this demo pipeline; escalating.",
+            "action_taken": "escalated",
+        })
+
     state["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
     return state, {"outputs": outputs, "critic_reviews": critic_reviews,
@@ -469,11 +560,16 @@ def main():
     parser.add_argument("--demo", action="store_true")
     parser.add_argument("--brd", help="BRD file to parse and run (default: kb/past_brds/brd-002-medium.md)")
     parser.add_argument("--persist-dir", default=None)
+    parser.add_argument("--approval-audio", help="audio file with the EM's spoken approve/reject decision (requires OPENAI_API_KEY)")
+    parser.add_argument("--approval-text", help="typed approve/reject decision, fallback for --approval-audio")
     args = parser.parse_args()
     if not args.demo:
         parser.error("only --demo is supported currently")
 
-    state, result = run_pipeline(brd_path=args.brd, persist_dir=args.persist_dir)
+    state, result = run_pipeline(
+        brd_path=args.brd, persist_dir=args.persist_dir,
+        approval_audio=args.approval_audio, approval_text=args.approval_text,
+    )
 
     print(f"pipeline_status: {state['pipeline_status']}")
     print(f"run_id: {state['run_id']}\n")

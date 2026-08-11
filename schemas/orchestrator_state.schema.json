@@ -44,10 +44,10 @@
       "items": {
         "type": "object",
         "properties": {
-          "type": { "type": "string", "enum": ["input_validation", "schema_compliance", "hallucination", "scope_creep", "confidentiality", "cross_agent_consistency"] },
+          "type": { "type": "string", "enum": ["input_validation", "schema_compliance", "hallucination", "scope_creep", "confidentiality", "cross_agent_consistency", "hitl_decision"] },
           "agent_id": { "type": "string" },
           "detail": { "type": "string" },
-          "action_taken": { "type": "string", "enum": ["rejected", "flagged", "auto_corrected", "escalated"] }
+          "action_taken": { "type": "string", "enum": ["rejected", "flagged", "auto_corrected", "escalated", "approved"] }
         },
         "required": ["type", "agent_id", "action_taken"]
       }

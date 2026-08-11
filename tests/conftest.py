@@ -42,14 +42,13 @@ def retrieved_chunks():
 
 
 @pytest.fixture(scope="session")
-def kb_collection(tmp_path_factory):
-    """A real Chroma collection built from the actual kb/ content, in an
-    isolated temp directory -- never touches the repo's own ./chroma_db.
-    Uses whatever embedding function scripts/common.py picks (OpenAI if
-    OPENAI_API_KEY is set, else the local fallback), same as every script --
-    these are real retrieval tests against real embeddings, not mocked ones.
-    Session-scoped: ingestion is real work (chunking + embedding calls), so
-    it's done once and every test in this run shares the result."""
+def kb_persist_dir(tmp_path_factory):
+    """An isolated Chroma persist directory, freshly ingested from the real
+    kb/ content -- never touches the repo's own ./chroma_db, which can be in
+    either embedding mode depending on what was last run there (mixing modes
+    raises, per README's "Don't mix modes" note). Uses whatever embedding
+    function scripts/common.py picks (OpenAI if OPENAI_API_KEY is set, else
+    the local fallback), consistently for the whole test session."""
     persist_dir = tmp_path_factory.mktemp("chroma_db")
     chunks = load_all_chunks()
     collection = build_collection(str(persist_dir), reset=True)
@@ -58,4 +57,11 @@ def kb_collection(tmp_path_factory):
         documents=[c["text"] for c in chunks],
         metadatas=[c["metadata"] for c in chunks],
     )
-    return collection
+    return persist_dir
+
+
+@pytest.fixture(scope="session")
+def kb_collection(kb_persist_dir):
+    """The Chroma collection object for kb_persist_dir -- these are real
+    retrieval tests against real embeddings, not mocked ones."""
+    return build_collection(str(kb_persist_dir))

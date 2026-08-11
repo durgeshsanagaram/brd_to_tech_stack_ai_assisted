@@ -1,0 +1,17 @@
+[
+  {
+    "file": "approve-01.mp3",
+    "text": "This looks good, approve it and proceed.",
+    "expected_decision": "approve"
+  },
+  {
+    "file": "reject-01.mp3",
+    "text": "This needs to be redone, please reject it.",
+    "expected_decision": "reject"
+  },
+  {
+    "file": "unclear-01.mp3",
+    "text": "Hmm, let me think about it for a bit.",
+    "expected_decision": "unclear"
+  }
+]
