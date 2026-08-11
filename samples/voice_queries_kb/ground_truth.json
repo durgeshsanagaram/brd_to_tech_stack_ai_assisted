@@ -1,0 +1,17 @@
+[
+  {
+    "file": "kb-query-01.mp3",
+    "text": "What does the engineering plan template for a medium complexity feature include?",
+    "agent": "plan_generator"
+  },
+  {
+    "file": "kb-query-02.mp3",
+    "text": "What architecture pattern works well for an event driven e-commerce checkout integration?",
+    "agent": "solution_architect"
+  },
+  {
+    "file": "kb-query-03.mp3",
+    "text": "What tech stack decisions have worked well for past e-commerce projects?",
+    "agent": "tech_stack_recommender"
+  }
+]
